@@ -79,10 +79,10 @@ async def scan_channel(client):
         if message.author == client.user and not message.content.startswith("Hello"):
             if len(message.mentions) == 1:
                 member = message.mentions[0]
-                print("RANGER mentioned this member:")
-                print(member.id)
-                print("Compare this to the scoreboard:")
-                print(scoreboard)
+                #print("RANGER mentioned this member:")
+                #print(member.id)
+                #print("Compare this to the scoreboard:")
+                #print(scoreboard)
                 increment_stories(member.id, scoreboard)
     await prompt_stories(client, channel, scoreboard)
     return scoreboard
@@ -125,9 +125,9 @@ async def on_message(message):
                 await message.channel.send(msg)
                 exit(0)
 
-    print("Found a message with these properties:")
-    print(message)
-    print("(" + str(message.content) + ")")
+    #print("Found a message with these properties:")
+    #print(message)
+    #print("(" + str(message.content) + ")")
 
 @client.event
 async def on_reaction_add(reaction, user):
@@ -135,7 +135,7 @@ async def on_reaction_add(reaction, user):
     if user == client.user:
         return
     if reaction.emoji == '\U0000261D':
-        print("got finger up reaction to nhie.")
+        #print("got finger up reaction to nhie.")
         await scan_channel(client)
 
 @client.event

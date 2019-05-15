@@ -1,7 +1,9 @@
 import discord, random
 
 fin = open("token")
-TOKEN = fin.read()
+print("Reading auth token . . .")
+TOKEN = fin.read().strip()
+print("Got token '" + TOKEN + "'.")
 fin.close()
 
 fin = open("superusers")
@@ -85,6 +87,12 @@ async def scan_channel(client):
     await prompt_stories(client, channel, scoreboard)
     return scoreboard
 
+async def comment_on_nhie(channel):
+    fin = open("nhie.comments")
+    comments = fin.readlines()
+    msg = random.choice(comments)
+    await channel.send(msg)
+
 
 @client.event
 async def on_message(message):
@@ -105,6 +113,10 @@ async def on_message(message):
         if message.content.startswith('!nhie') or message.content.startswith('!never') or message.content.startswith('!Never') or message.content.startswith('!Nhie') or message.content.startswith('!NHIE'):
             emoji = '\U0000261D'
             await message.add_reaction(emoji)
+            if random.random() < 0.1:
+                await comment_on_nhie(message.channel)
+            else:
+                print("Rolled too high.")
 
         # Superuser commands
         if message.author.id in SUPERUSER_IDS: #superuser IDs

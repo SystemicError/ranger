@@ -1,4 +1,4 @@
-import discord, random
+import discord, random, time, asyncio
 
 fin = open("token")
 print("Reading auth token . . .")
@@ -93,6 +93,13 @@ async def comment_on_nhie(channel):
     msg = random.choice(comments)
     await channel.send(msg)
 
+async def background_scan():
+    while True:
+        print("Scheduled scanning . . .")
+        await scan_channel(client)
+        print("Completed scan at time:")
+        print(time.asctime(time.localtime(time.time())))
+        await asyncio.sleep(1800)
 
 @client.event
 async def on_message(message):
@@ -134,9 +141,10 @@ async def on_reaction_add(reaction, user):
     # don't react to own reactions
     if user == client.user:
         return
-    if reaction.emoji == '\U0000261D':
+    # Uncommenting this will cause RANGER launch multiple concurrent scans if !nhies are reacted to in rapid succession.
+    #if reaction.emoji == '\U0000261D':
         #print("got finger up reaction to nhie.")
-        await scan_channel(client)
+    #    await scan_channel(client)
 
 @client.event
 async def on_ready():
@@ -144,6 +152,6 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('------')
-    await scan_channel(client)
+    client.loop.create_task(background_scan())
 
 client.run(TOKEN)

@@ -117,7 +117,7 @@ async def on_message(message):
             msg = scoreboard_string(client, scoreboard)
             await message.channel.send(msg)
 
-        if message.content.startswith('!nhie') or message.content.startswith('!never') or message.content.startswith('!Never') or message.content.startswith('!Nhie') or message.content.startswith('!NHIE'):
+        if message.content.lower().startswith('!nhie') or message.content.startswith('!never'):
             emoji = '\U0000261D'
             await message.add_reaction(emoji)
             if random.random() < 0.1:

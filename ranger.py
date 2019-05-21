@@ -30,7 +30,7 @@ def increment_stories(user_id, scoreboard):
 
 def scoreboard_string(client, scoreboard):
     msg = "Here is the current scoreboard:\n"
-    for user_id in scoreboard.keys():
+    for user_id in sorted(scoreboard.keys(), key=lambda x: scoreboard[x]["deeds"]):
         if scoreboard[user_id] != 1:
             plural = "s"
         else:
@@ -76,7 +76,7 @@ async def scan_channel(client):
                 if str(reaction) == '\U0000261D':
                     async for user in reaction.users():
                         scoreboard = increment_scoreboard(user.id, scoreboard)
-        if message.author == client.user and not message.content.startswith("Hello"):
+        if message.author == client.user and message.content.endswith("Time to tell us a story!"):
             if len(message.mentions) == 1:
                 member = message.mentions[0]
                 #print("RANGER mentioned this member:")

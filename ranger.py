@@ -31,7 +31,7 @@ def increment_stories(user_id, scoreboard):
 def scoreboard_string(client, scoreboard):
     msg = "Here is the current scoreboard:\n"
     for user_id in sorted(scoreboard.keys(), key=lambda x: scoreboard[x]["deeds"]):
-        if scoreboard[user_id] != 1:
+        if scoreboard[user_id]["deeds"] != 1:
             plural = "s"
         else:
             plural = ""

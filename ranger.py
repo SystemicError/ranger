@@ -70,7 +70,7 @@ async def scan_channel(client):
         if str(c) == "campfire":
             channel = c
     async for message in channel.history(limit=10000):
-        if message.content.startswith('!nhie') or message.content.startswith('!never') or message.content.startswith('!Never') or message.content.startswith('!Nhie') or message.content.startswith('!NHIE'):
+        if message.content.lower().startswith('!nhie') or message.content.lower().startswith('!never'):
             print(message.content)
             for reaction in message.reactions:
                 if str(reaction) == '\U0000261D':
@@ -117,13 +117,20 @@ async def on_message(message):
             msg = scoreboard_string(client, scoreboard)
             await message.channel.send(msg)
 
-        if message.content.lower().startswith('!nhie') or message.content.startswith('!never'):
+        if message.content.lower().startswith('!nhie') or message.content.lower().startswith('!never'):
             emoji = '\U0000261D'
             await message.add_reaction(emoji)
             if random.random() < 0.1:
                 await comment_on_nhie(message.channel)
             else:
                 print("Rolled too high.")
+
+        if message.content.lower().startswith('!two') or message.content.lower().startswith('!2'):
+            pass
+            #one = '\U00000031'
+            #await message.add_reaction(one)
+            #await message.add_reaction(two)
+            #await message.add_reaction(three)
 
         # Superuser commands
         if message.author.id in SUPERUSER_IDS: #superuser IDs

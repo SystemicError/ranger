@@ -84,6 +84,8 @@ async def scan_channel(client):
                 #print("Compare this to the scoreboard:")
                 #print(scoreboard)
                 increment_stories(member.id, scoreboard)
+        if message.content.lower().startswith('!two') or message.content.startswith('!2'):
+            print(message.reactions)
     await prompt_stories(client, channel, scoreboard)
     return scoreboard
 
@@ -125,12 +127,13 @@ async def on_message(message):
             else:
                 print("Rolled too high.")
 
-        if message.content.lower().startswith('!two') or message.content.lower().startswith('!2'):
-            pass
-            #one = '\U00000031'
-            #await message.add_reaction(one)
-            #await message.add_reaction(two)
-            #await message.add_reaction(three)
+        if message.content.lower().startswith('!two') or message.content.startswith('!2'):
+            one = '1⃣'
+            two = '2⃣'
+            three = '3⃣'
+            await message.add_reaction(one)
+            await message.add_reaction(two)
+            await message.add_reaction(three)
 
         # Superuser commands
         if message.author.id in SUPERUSER_IDS: #superuser IDs

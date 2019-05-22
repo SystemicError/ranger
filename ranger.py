@@ -103,6 +103,19 @@ async def background_scan():
         print(time.asctime(time.localtime(time.time())))
         await asyncio.sleep(1800)
 
+async def active_ttaal(channel):
+    "Checks if there is an active two truths and a lie already open in this channel."
+    first = True
+    async for message in channel.history(limit=1000):
+        if first:
+            first = False
+        else:
+            if message.author == client.user and message.content.endswith("points this time."):
+                return None
+            if message.content.lower().startswith("!two") or message.content.startswith("!2"):
+                return message
+    return None
+
 @client.event
 async def on_message(message):
     # we do not want the bot to reply to itself
@@ -127,13 +140,61 @@ async def on_message(message):
             else:
                 print("Rolled too high.")
 
+        # Two truths and a lie functions
         if message.content.lower().startswith('!two') or message.content.startswith('!2'):
-            one = '1⃣'
-            two = '2⃣'
-            three = '3⃣'
-            await message.add_reaction(one)
-            await message.add_reaction(two)
-            await message.add_reaction(three)
+            ttaal = await active_ttaal(message.channel)
+            if ttaal == None:
+                one = '1⃣'
+                two = '2⃣'
+                three = '3⃣'
+                await message.add_reaction(one)
+                await message.add_reaction(two)
+                await message.add_reaction(three)
+            else:
+                print("Found ttaal:" + ttaal.content)
+                if ttaal.author.nick == None:
+                    nm = ttaal.author.name
+                else:
+                    nm = ttaal.author.nick
+                msg = "I can't do that, {0.author.mention}.  ".format(message) + nm + "'s question is still open for voting."
+                await message.channel.send(msg)
+
+        if message.content.lower().startswith("!reveal"):
+            ttaal = await active_ttaal(message.channel)
+            if ttaal != None:
+                if ttaal.author.nick == None:
+                    nm = ttaal.author.name
+                else:
+                    nm = ttaal.author.nick
+            if ttaal == None:
+                msg = "There's no active question, camper!  You have to start one with !two or !2 first."
+                await message.channel.send(msg)
+            elif ttaal.author == message.author:
+                fields = message.content.lower().split()
+                if len(fields) < 2:
+                    msg = "You have to reveal a number, camper!"
+                    await message.channel.send(msg)
+                else:
+                    lie = fields[1]
+                    if lie == "one" or lie == "1":
+                        lie = 1
+                    elif lie == "two" or lie == "2":
+                        lie = 2
+                    elif lie == "three" or lie == "3":
+                        lie = 3
+                    if not lie in [1, 2, 3]:
+                        msg = "I don't recognize that number, camper!"
+                        await message.channel.send(msg)
+                    else:
+                        tricked = []
+                        not_tricked = []
+                        for reaction in ttaal.reactions:
+                            pass
+                        msg = "Mystery revealed!  I'm not smart enough to do anything about it, yet.  Some folks probably won some points this time."
+                        await message.channel.send(msg)
+            else:
+                msg = "You can't reveal the answer to " + nm + "'s question, {0.author.mention}!  Wait your turn, please.".format(message)
+                await message.channel.send(msg)
 
         # Superuser commands
         if message.author.id in SUPERUSER_IDS: #superuser IDs
@@ -142,9 +203,6 @@ async def on_message(message):
                 await message.channel.send(msg)
                 exit(0)
 
-    #print("Found a message with these properties:")
-    #print(message)
-    #print("(" + str(message.content) + ")")
 
 @client.event
 async def on_reaction_add(reaction, user):

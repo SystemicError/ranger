@@ -138,7 +138,7 @@ async def background_scan():
         await scan_channel(client)
         print("Completed scan at time:")
         print(time.asctime(time.localtime(time.time())))
-        ttaal = await active_ttaal(channel)
+        ttaal = await active_ttaal(channel, skip=False)
         print("Active ttaal:" + str(ttaal))
         if ttaal != None:
             # check in on age of active ttaal

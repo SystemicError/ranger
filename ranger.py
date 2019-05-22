@@ -1,4 +1,4 @@
-import discord, random, time, asyncio
+import discord, random, time, asyncio, re
 
 fin = open("token")
 print("Reading auth token . . .")
@@ -13,6 +13,7 @@ fin.close()
 client = discord.Client()
 
 STORY_THRESHHOLD = 10
+DIGIT_EMOJIS = ['1⃣', '2⃣', '3⃣']
 
 def increment_scoreboard(user_id, scoreboard):
     if user_id in scoreboard.keys():
@@ -106,15 +107,16 @@ async def background_scan():
 async def active_ttaal(channel):
     "Checks if there is an active two truths and a lie already open in this channel."
     first = True
+    recent = None
     async for message in channel.history(limit=1000):
         if first:
             first = False
         else:
             if message.author == client.user and message.content.endswith("points this time."):
-                return None
+                return recent
             if message.content.lower().startswith("!two") or message.content.startswith("!2"):
-                return message
-    return None
+                recent = message
+    return recent
 
 @client.event
 async def on_message(message):
@@ -144,12 +146,8 @@ async def on_message(message):
         if message.content.lower().startswith('!two') or message.content.startswith('!2'):
             ttaal = await active_ttaal(message.channel)
             if ttaal == None:
-                one = '1⃣'
-                two = '2⃣'
-                three = '3⃣'
-                await message.add_reaction(one)
-                await message.add_reaction(two)
-                await message.add_reaction(three)
+                for i in range(3):
+                    await message.add_reaction(DIGIT_EMOJIS[i])
             else:
                 print("Found ttaal:" + ttaal.content)
                 if ttaal.author.nick == None:
@@ -171,27 +169,58 @@ async def on_message(message):
                 await message.channel.send(msg)
             elif ttaal.author == message.author:
                 fields = message.content.lower().split()
+                print("Fields:  " + str(fields))
                 if len(fields) < 2:
                     msg = "You have to reveal a number, camper!"
                     await message.channel.send(msg)
                 else:
-                    lie = fields[1]
+                    lie = re.search(r"[a-z0-9]+", fields[1]).group()
+                    print("Lie:"  + lie)
                     if lie == "one" or lie == "1":
-                        lie = 1
+                        lie = 0
                     elif lie == "two" or lie == "2":
-                        lie = 2
+                        lie = 1
                     elif lie == "three" or lie == "3":
-                        lie = 3
-                    if not lie in [1, 2, 3]:
+                        lie = 2
+                    if not lie in [0, 1, 2]:
                         msg = "I don't recognize that number, camper!"
                         await message.channel.send(msg)
                     else:
-                        tricked = []
-                        not_tricked = []
+                        liar_points = 0
+                        sleuths = {} # user: score
+                        print("Reactions:  " + str(ttaal.reactions))
                         for reaction in ttaal.reactions:
-                            pass
-                        msg = "Mystery revealed!  I'm not smart enough to do anything about it, yet.  Some folks probably won some points this time."
-                        await message.channel.send(msg)
+                            async for user in reaction.users():
+                                if user != client.user and user != ttaal.author:
+                                    if str(reaction) == DIGIT_EMOJIS[lie]:
+                                        # give a point to this sleuth
+                                        if user in sleuths.keys():
+                                            sleuths[user] += 1
+                                        else:
+                                            sleuths[user] = 1
+                                    elif str(reaction) in DIGIT_EMOJIS:
+                                        # give a point to the liar
+                                        liar_points += 1
+                                        # deduct a point from this sleuth
+                                        if user in sleuths.keys():
+                                            sleuths[user] -= 1
+                                        else:
+                                            sleuths[user] = -1
+                        # filter out double-voters as folks whose score is < 1
+                        lie_detectors = list(filter(lambda x: sleuths[x] == 1, sleuths.keys()))
+                        msg = "Mystery revealed!\n"
+                        msg2 = ""
+                        if len(lie_detectors) > 0:
+                            msg2 = "One point each to these players:  "
+                            for lie_detector in lie_detectors:
+                                msg2 = msg2 + "{0.mention} ".format(lie_detector)
+                            msg2 = msg2 + "\n"
+                        if liar_points == 1:
+                            plural = ""
+                        else:
+                            plural = "s"
+                        msg3 = "{0.author.mention} won ".format(message) + str(liar_points) + " point" + plural + " this time."
+                        await message.channel.send(msg + msg2 + msg3)
             else:
                 msg = "You can't reveal the answer to " + nm + "'s question, {0.author.mention}!  Wait your turn, please.".format(message)
                 await message.channel.send(msg)

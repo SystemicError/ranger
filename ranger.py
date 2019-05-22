@@ -1,4 +1,4 @@
-import discord, random, time, asyncio, re
+import discord, random, time, asyncio, re, datetime
 
 fin = open("token")
 print("Reading auth token . . .")
@@ -114,17 +114,9 @@ async def comment_on_nhie(channel):
     msg = random.choice(comments)
     await channel.send(msg)
 
-async def background_scan():
-    while True:
-        print("Scheduled scanning . . .")
-        await scan_channel(client)
-        print("Completed scan at time:")
-        print(time.asctime(time.localtime(time.time())))
-        await asyncio.sleep(1800)
-
-async def active_ttaal(channel):
+async def active_ttaal(channel, skip=True):
     "Checks if there is an active two truths and a lie already open in this channel."
-    first = True
+    first = skip
     recent = None
     async for message in channel.history(limit=1000):
         if first:
@@ -135,6 +127,33 @@ async def active_ttaal(channel):
             if message.content.lower().startswith("!two") or message.content.startswith("!2"):
                 recent = message
     return recent
+
+async def background_scan():
+    channels = client.get_all_channels()
+    for c in channels:
+        if str(c) == "campfire":
+            channel = c
+    while True:
+        print("Scheduled scanning . . .")
+        await scan_channel(client)
+        print("Completed scan at time:")
+        print(time.asctime(time.localtime(time.time())))
+        ttaal = await active_ttaal(channel)
+        print("Active ttaal:" + str(ttaal))
+        if ttaal != None:
+            # check in on age of active ttaal
+            print("Most recent ttaal:")
+            creation = ttaal.created_at
+            print(ttaal)
+            print("Date:")
+            print(creation)
+            print("Age:")
+            age = datetime.datetime.now() - creation
+            print(age)
+            if datetime.timedelta(hours=1) < age:
+                msg = "{0.author.mention}, remember to !reveal your lie.".format(ttaal)
+                await channel.send(msg)
+        await asyncio.sleep(1800)
 
 @client.event
 async def on_message(message):

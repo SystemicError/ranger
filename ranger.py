@@ -19,14 +19,21 @@ def increment_scoreboard(user_id, scoreboard):
     if user_id in scoreboard.keys():
         scoreboard[user_id]["deeds"] += 1
     else:
-        scoreboard[user_id] = {"deeds": 1, "stories": 0}
+        scoreboard[user_id] = {"deeds": 1, "stories": 0, "sleuth": 0}
     return scoreboard
 
 def increment_stories(user_id, scoreboard):
     if user_id in scoreboard.keys():
         scoreboard[user_id]["stories"] += 1
     else:
-        scoreboard[user_id] = {"deeds": 0, "stories": 1}
+        scoreboard[user_id] = {"deeds": 0, "stories": 1, "sleuth": 0}
+    return scoreboard
+
+def increment_sleuth(user_id, scoreboard, count):
+    if user_id in scoreboard.keys():
+        scoreboard[user_id]["sleuth"] += count
+    else:
+        scoreboard[user_id] = {"deeds": 0, "stories": 0, "sleuth": count}
     return scoreboard
 
 def scoreboard_string(client, scoreboard):
@@ -36,6 +43,10 @@ def scoreboard_string(client, scoreboard):
             plural = "s"
         else:
             plural = ""
+        if scoreboard[user_id]["sleuth"] != 1:
+            sleuth_plural = "s"
+        else:
+            sleuth_plural = ""
         user = client.get_user(int(user_id))
         members = client.get_all_members()
         member = None
@@ -46,7 +57,7 @@ def scoreboard_string(client, scoreboard):
             nick = member.nick
         else:
             nick = member.name
-        msg = msg + str(nick) + " has confessed " + str(scoreboard[user_id]["deeds"]) + " time" + plural + ".\n"
+        msg = msg + str(nick) + " has confessed " + str(scoreboard[user_id]["deeds"]) + " time" + plural + " and earned " + str(scoreboard[user_id]["sleuth"]) + " lie point" + sleuth_plural + ".\n"
     return msg
 
 
@@ -72,7 +83,7 @@ async def scan_channel(client):
             channel = c
     async for message in channel.history(limit=10000):
         if message.content.lower().startswith('!nhie') or message.content.lower().startswith('!never'):
-            print(message.content)
+            #print(message.content)
             for reaction in message.reactions:
                 if str(reaction) == '\U0000261D':
                     async for user in reaction.users():
@@ -85,8 +96,15 @@ async def scan_channel(client):
                 #print("Compare this to the scoreboard:")
                 #print(scoreboard)
                 increment_stories(member.id, scoreboard)
-        if message.content.lower().startswith('!two') or message.content.startswith('!2'):
-            print(message.reactions)
+        if message.author == client.user and message.content.endswith("this time."):
+            #print(message.content)
+            for user in message.mentions[1:]:
+                #print("Sleuth: " + str(user))
+                increment_sleuth(user.id, scoreboard, 1)
+            points = int(re.search(r" [0-9]+ ", message.content).group(0))
+            #print("points: " + str(points))
+            #print("Author: " + str(message.mentions[0]))
+            increment_sleuth(message.mentions[0].id, scoreboard, points)
     await prompt_stories(client, channel, scoreboard)
     return scoreboard
 
@@ -112,7 +130,7 @@ async def active_ttaal(channel):
         if first:
             first = False
         else:
-            if message.author == client.user and message.content.endswith("points this time."):
+            if message.author == client.user and message.content.endswith("this time."):
                 return recent
             if message.content.lower().startswith("!two") or message.content.startswith("!2"):
                 recent = message
@@ -169,13 +187,11 @@ async def on_message(message):
                 await message.channel.send(msg)
             elif ttaal.author == message.author:
                 fields = message.content.lower().split()
-                print("Fields:  " + str(fields))
                 if len(fields) < 2:
                     msg = "You have to reveal a number, camper!"
                     await message.channel.send(msg)
                 else:
                     lie = re.search(r"[a-z0-9]+", fields[1]).group()
-                    print("Lie:"  + lie)
                     if lie == "one" or lie == "1":
                         lie = 0
                     elif lie == "two" or lie == "2":
@@ -188,7 +204,6 @@ async def on_message(message):
                     else:
                         liar_points = 0
                         sleuths = {} # user: score
-                        print("Reactions:  " + str(ttaal.reactions))
                         for reaction in ttaal.reactions:
                             async for user in reaction.users():
                                 if user != client.user and user != ttaal.author:

@@ -87,7 +87,8 @@ async def scan_channel(client):
             for reaction in message.reactions:
                 if str(reaction) == '\U0000261D':
                     async for user in reaction.users():
-                        scoreboard = increment_scoreboard(user.id, scoreboard)
+                        if user in client.get_all_members():
+                            scoreboard = increment_scoreboard(user.id, scoreboard)
         if message.author == client.user and message.content.endswith("Time to tell us a story!"):
             if len(message.mentions) == 1:
                 member = message.mentions[0]
@@ -225,6 +226,8 @@ async def on_message(message):
                         sleuths = {} # user: score
                         for reaction in ttaal.reactions:
                             async for user in reaction.users():
+                                print("Test line")
+                                print(ttaal)
                                 if user != client.user and user != ttaal.author:
                                     if str(reaction) == DIGIT_EMOJIS[lie]:
                                         # give a point to this sleuth
@@ -273,9 +276,9 @@ async def on_reaction_add(reaction, user):
     if user == client.user:
         return
     # Uncommenting this will cause RANGER launch multiple concurrent scans if !nhies are reacted to in rapid succession.
-    #if reaction.emoji == '\U0000261D':
-        #print("got finger up reaction to nhie.")
-    #    await scan_channel(client)
+    if reaction.emoji == '\U0000261D':
+        print("got finger up reaction to nhie.")
+        await scan_channel(client)
 
 @client.event
 async def on_ready():

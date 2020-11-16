@@ -72,6 +72,12 @@ async def prompt_stories(client, channel, scoreboard):
                     user = u
             msg = "{0.mention}, you have reached a score of ".format(user) + str(scoreboard[user.id]["deeds"]) + ".  Time to tell us a story!"
             if user != client.user:
+                print("Prompting for:")
+                print(msg)
+                print("user_id")
+                print(user_id)
+                print("user.id")
+                print(user.id)
                 await channel.send(msg)
 
 async def scan_channel(client):
@@ -106,6 +112,9 @@ async def scan_channel(client):
             #print("points: " + str(points))
             #print("Author: " + str(message.mentions[0]))
             increment_sleuth(message.mentions[0].id, scoreboard, points)
+    print("SCOREBOARD:")
+    print(scoreboard)
+    print ("Prompting . . .")
     await prompt_stories(client, channel, scoreboard)
     return scoreboard
 
@@ -164,6 +173,33 @@ async def on_message(message):
 
     if message.content.startswith('!hello'):
         msg = 'Hello, {0.author.mention}!'.format(message)
+        await message.channel.send(msg)
+
+    if message.content.startswith('!d6'):
+        msg = ('Dice roll: ' + str(random.randint(1,6))).format(message)
+        await message.channel.send(msg)
+
+    if message.content.startswith('!roll'):
+        d_index = message.content.find("d")
+        print("d_index: " + str(d_index))
+        space_index = message.content.find(" ")
+        if space_index == -1:
+          space_index = len(message.content)
+        try:
+          n = int(message.content[5:d_index])
+          face = int(message.content[d_index+1:space_index])
+        except ValueError:
+          n = -1
+          face = -1
+        if n == -1:
+          msg = "I don't know how to roll that, sorry!"
+        elif n > 100:
+          msg = "I don't have that many dice, sorry!"
+        else:
+          roll_string = ""
+          for i in range(n):
+            roll_string = roll_string + str(random.randint(1,face)) + " "
+          msg = ('Rolling ' + str(n) + ' dice with ' + str(face) + ' faces: ' + roll_string).format(message)
         await message.channel.send(msg)
 
     if str(message.channel) == "campfire":
@@ -276,9 +312,9 @@ async def on_reaction_add(reaction, user):
     if user == client.user:
         return
     # Uncommenting this will cause RANGER launch multiple concurrent scans if !nhies are reacted to in rapid succession.
-    if reaction.emoji == '\U0000261D':
-        print("got finger up reaction to nhie.")
-        await scan_channel(client)
+    #if reaction.emoji == '\U0000261D':
+    #    print("got finger up reaction to nhie.")
+    #    await scan_channel(client)
 
 @client.event
 async def on_ready():
